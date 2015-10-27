@@ -36,12 +36,22 @@ function lookup(obj, key, value) {
     return null;
   }
 
+  // If more than two argument given, set the value.
+  // Here, instead of returning the value, we return the updated object.
+  // This is necessary to update properties that have getter/setters as they do
+  // not necessarily return a ref to the base object and thus may make
+  // deep-setting a no-op (see issue #90)
   if (arguments.length > 2) {
-    if (key.length === 1) {
-      obj[key[0]] = value;
-      return obj[key[0]];
-    }
-    return lookup(obj[key[0]], key.slice(1), value);
+    // Set the value if there is only one key remaining in the path, otherwise,
+    // make a recursivecall after resolution. If the property is not an object
+    // (i.e. is a literal or is undefined), create a new object and use it to
+    // continue setting props
+    obj[key[0]] = key.length === 1
+                ? value
+                : lookup(typeof obj[key[0]] === 'object' ? obj[key[0]] : {},
+                         key.slice(1), value);
+
+    return obj;
   }
 
   if (key.length === 1) {
